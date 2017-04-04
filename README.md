@@ -10,14 +10,13 @@ There are two possibilities for initializing the state estimate, depending on wh
 
 If the first available measurement comes from the lidar sensor, then the initialization is simple.  We simply take the measured `x` and `y` positions as the initial values for `px` and `py`, and assume `vx` and `vy` are initially `0.0`.
 
-From Constructor function in class KalmanFilter kalman_filter.cpp:
+*From Constructor function in class KalmanFilter kalman_filter.cpp*
 ```C++
 x_ = VectorXd(4);
 x_ << 1, 1, 0, 0;
 ```
 
-From FusionEKF.cpp:
-
+*From FusionEKF.cpp*
 ```C++
 else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
         ekf_.x_(0) = measurement_pack.raw_measurements_(0);
@@ -30,7 +29,7 @@ else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
 
 If the first available measurement comes from the radar sensors, then we need to convert the polar coordinates `rho` and `phi` into Cartesian coordinates.  Unfortunately, we don't know the direction of `rho_dot`, so we can't use this information to initialize `vx` or `vy`.  Like the lidar case, we assume `vx` and `vy` are initially `0.0`.
 
-From tools.cpp
+*From tools.cpp*
 ```C++
 VectorXd Tools::Polar2Cartesian(const VectorXd& radar_meas) {
     /**
@@ -54,8 +53,7 @@ VectorXd Tools::Polar2Cartesian(const VectorXd& radar_meas) {
 }
 ```
 
-From FusionEKF.cpp:
-
+*From FusionEKF.cpp*
 ```C++
 if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
         ekf_.x_ = tools.Polar2Cartesian(measurement_pack.raw_measurements_);
@@ -68,8 +66,7 @@ For radar measurements, we have a nonlinear function `h(x)` to map Cartesian coo
 
 In order to update the Kalman filter `K` matrix, we need a linear approximation of `h(x)`, i.e. the Jacobian calculated at point `x`.  The Kalman filter update equations are written only for linear systems.  The Jacobian calculation is illustrated below.
 
-From tools.cpp
-
+*From tools.cpp*
 ```C++
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
     MatrixXd Jacobian(3,4);
@@ -103,8 +100,7 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 
 In order to calculate the predicted measurement, we use the original nonlinear function, as there is no need to simplify to a linear function.  The nonlinear funciton `h(x)` is illustrated below.
 
-From tools.cpp:
-
+*From tools.cpp*
 ```C++
 VectorXd Tools::Cartesian2Polar(const VectorXd& x_state) {
     /**
@@ -138,7 +134,7 @@ VectorXd Tools::Cartesian2Polar(const VectorXd& x_state) {
 ## Predict Step ##
 The predict step is quite simple.  The `F` and `Q` matrices are updated based on the current measurement timestamp, and `x'` and `P` are calculated accordingly.
 
-From FusionEKF.cpp
+*From FusionEKF.cpp*
 ```C++
   // Update F and Q matrices, calculate x'
   float dt, dt2, dt3, dt4;
@@ -165,7 +161,7 @@ From FusionEKF.cpp
   ekf_.Predict();
 ```
 
-From kalman_filter.cpp
+*From kalman_filter.cpp*
 ```C++
 void KalmanFilter::Predict() {
     // From Lesson 11
@@ -183,7 +179,7 @@ The update step is dependent on the measurement type: radar or lidar.  The diffe
 
 The relevant code is shown below.
 
-From FusionEKF.cpp
+*From FusionEKF.cpp*
 ```C++
 
 //measurement covariance matrix - laser
@@ -211,7 +207,7 @@ if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
   }
 ```
 
-From kalman_filter.cpp
+*From kalman_filter.cpp*
 ```C++
 // Lidar update
 void KalmanFilter::Update(const VectorXd &z) {
@@ -255,7 +251,7 @@ Two datafiles are provided to evaluate the accuracy for the final EKF.
 
 RMSE is calculated as shown below.
 
-From tools.cpp
+*From tools.cpp*
 ```C++
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
@@ -323,3 +319,8 @@ For the case where both sensors are used, RMSE for the y position is 0.016.  For
 
 ![Whoops, where's my image](data/radar_only.png)
 *Results using only radar*
+
+## Reflections ##
+This project is mainly a review of C++.  The code necessary to complete the program is already completed during the lesson labs, and one need only copy and relevant code into the project.
+
+The project is a good first exercise, but overall does not offer much teaching.  The lessons cover all of the material in such detail that the project is almost automatic.
