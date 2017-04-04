@@ -250,7 +250,49 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
 ## Performance ##
 Two datafiles are provided to evaluate the accuracy for the final EKF.
-1. data/radar_only.png
+1. data/sample-laser-radar-measurement-data-1.txt
+1. data/sample-laser-radar-measurement-data-2.txt
+
+RMSE is calculated as shown below.
+
+From tools.cpp
+```C++
+VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
+                              const vector<VectorXd> &ground_truth) {
+    VectorXd rmse(4);
+    rmse << 0,0,0,0;
+    
+    // From Lesson 21
+    
+    if (estimations.size() != ground_truth.size()){
+        std::cout << "Array sizes must match!";
+        return rmse;
+    }
+    else if (estimations.size() == 0){
+        std::cout << "Arrays must be non-empty!";
+        return rmse;
+    }
+    
+    //accumulate squared residuals
+    for(int i=0; i < estimations.size(); ++i){
+        // ... your code here
+        VectorXd tmp = estimations[i]-ground_truth[i];
+        tmp = tmp.array()*tmp.array();
+        rmse += tmp;
+        
+    }
+    
+    //calculate the mean
+    rmse = rmse/estimations.size();
+    
+    //calculate the squared root
+    rmse = rmse.array().sqrt();
+    
+    return rmse;
+}
+```
+
+My EKF implementation satisfies the rubric accuracy criteria for both datasets.
 
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
