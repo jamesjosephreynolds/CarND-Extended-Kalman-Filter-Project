@@ -136,7 +136,7 @@ VectorXd Tools::Cartesian2Polar(const VectorXd& x_state) {
 ```
 
 ## Predict Step ##
-The predict step is quite simple.  The `F` and `Q` matrices are updated based on the current measurement timestamp, and `x'` is calculated accordingly.
+The predict step is quite simple.  The `F` and `Q` matrices are updated based on the current measurement timestamp, and `x'` and `P` are calculated accordingly.
 
 From FusionEKF.cpp
 ```C++
@@ -174,6 +174,11 @@ void KalmanFilter::Predict() {
     P_ = F_ * P_ * Ft + Q_;
 }
 ```
+
+## Update Step ##
+The update step is dependent on the measurement type: radar or lidar.  The differences are as follows:
+1. For the radar case, calculate `z_pred` using the nonlinear function `h(x)`, for lidar case use `H` matrix
+2. For the radar case, calculate `K` using the Jacobian, for lidar case use the `H` matrix
 
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
