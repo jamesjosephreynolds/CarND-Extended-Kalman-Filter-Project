@@ -6,14 +6,14 @@ This project is originally forked from https://github.com/udacity/CarND-Extended
 
 There are two possibilities for initializing the state estimate, depending on which sensor provides a measurement first.
 
-### Lidar Measurement Initialization ##
+### Lidar Measurement Initialization ###
 
 If the first available measurement comes from the lidar sensor, then the initialization is simple.  We simply take the measured `x` and `y` positions as the initial values for `px` and `py`, and assume `vx` and `vy` are initially `0.0`.
 
 From Constructor function in class KalmanFilter kalman_filter.cpp:
 ```
 x_ = VectorXd(4);
-  x_ << 1, 1, 0, 0;
+x_ << 1, 1, 0, 0;
 ```
 
 From FusionEKF.cpp:
@@ -22,6 +22,43 @@ From FusionEKF.cpp:
 else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
         ekf_.x_(0) = measurement_pack.raw_measurements_(0);
         ekf_.x_(1) = measurement_pack.raw_measurements_(1);
+        previous_timestamp_ = measurement_pack.timestamp_;
+    }
+```
+
+### Radar Measurement Initialization ###
+
+If the first available measurement comes from the radar sensors, then we need to convert the polar coordinates `rho` and `phi` into Cartesian coordinates.  Unfortunately, we don't know the direction of `rho_dot`, so we can't use this information to initialize `vx` or `vy`.  Like the lidar case, we assume `vx` and `vy` are initially `0.0`.
+
+From tools.cpp
+```
+VectorXd Tools::Polar2Cartesian(const VectorXd& radar_meas) {
+    /**
+     * Convert polar coordinates to Cartesian.
+     */
+    VectorXd f_x(4,1);
+    f_x << 1,1,0,0;
+    
+    // From Lesson 14
+    
+    float rho = radar_meas(0);
+    float phi = radar_meas(1);
+    //float rho_dot = radar_meas(2);
+    
+    f_x << rho*cos(phi),
+           -rho*sin(phi),
+           0, //unknown how to break rho_dot into vx and vy components
+           0;
+    
+    return f_x;
+}
+```
+
+From FusionEKF.cpp:
+
+```
+if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+        ekf_.x_ = tools.Polar2Cartesian(measurement_pack.raw_measurements_);
         previous_timestamp_ = measurement_pack.timestamp_;
     }
 ```
