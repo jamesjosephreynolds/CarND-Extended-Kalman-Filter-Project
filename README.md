@@ -177,8 +177,76 @@ void KalmanFilter::Predict() {
 
 ## Update Step ##
 The update step is dependent on the measurement type: radar or lidar.  The differences are as follows:
-1. For the radar case, calculate `z_pred` using the nonlinear function `h(x)`, for lidar case use `H` matrix
-2. For the radar case, calculate `K` using the Jacobian, for lidar case use the `H` matrix
+1. For the radar case, calculate `z_pred` using the nonlinear function `h(x)`, for the lidar case use `H` matrix
+2. For the radar case, calculate `K` using the Jacobian, for the lidar case use the `H` matrix
+3. For the radar case, the measurement covariance matrix is 3x3, for the lidar case it is 2x2
+
+The relevant code is shown below.
+
+From FusionEKF.cpp
+```C++
+
+//measurement covariance matrix - laser
+R_laser_ << 0.0225, 0,
+            0, 0.0225;
+
+//measurement covariance matrix - radar
+R_radar_ << 0.09, 0, 0,
+            0, 0.0009, 0,
+            0, 0, 0.09;
+
+if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+    // Radar updates
+    ekf_.R_ = R_radar_;
+    ekf_.H_ = MatrixXd(3,4);
+    ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
+    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
+  } else {
+    // Laser updates
+    ekf_.R_ = R_laser_;
+    ekf_.H_ = MatrixXd(2,4);
+    ekf_.H_ << 1, 0, 0, 0,
+               0, 1, 0, 0;
+    ekf_.Update(measurement_pack.raw_measurements_);
+  }
+```
+
+From kalman_filter.cpp
+```C++
+// Lidar update
+void KalmanFilter::Update(const VectorXd &z) {
+    // From Lesson 11
+    VectorXd z_pred = H_ * x_;
+    VectorXd y = z - z_pred;
+    MatrixXd Ht = H_.transpose();
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd K = P_ * Ht * S.inverse();
+    
+    //new estimate
+    x_ = x_ + (K * y);
+    long x_size = x_.size();
+    MatrixXd I = MatrixXd::Identity(x_size, x_size);
+    P_ = (I - K * H_) * P_;
+}
+
+// Radar update
+void KalmanFilter::UpdateEKF(const VectorXd &z) {
+  // From Lesson 20
+  Tools tool;
+  // Use nonlinear prediction, not Jacobian
+  VectorXd z_pred = tool.Cartesian2Polar(x_);
+  VectorXd y = z - z_pred;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd K = P_ * Ht * S.inverse();
+    
+  //new estimate
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
+}
+```
 
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
