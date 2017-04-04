@@ -63,6 +63,78 @@ if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     }
 ```
 
+## Jacobian and Predicted Measurement ##
+For radar measurements, we have a nonlinear function `h(x)` to map Cartesian coordinates `px`, `py`, `vx`, `vy` into an estimated measurement in polar coordinates.
+
+In order to update the Kalman filter `K` matrix, we need a linear approximation of `h(x)`, i.e. the Jacobian calculated at point `x`.  The Kalman filter update equations are written only for linear systems.  The Jacobian calculation is illustrated below.
+
+From tools.cpp
+
+```C++
+MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
+    MatrixXd Jacobian(3,4);
+    Jacobian << 0,0,0,0,
+                0,0,0,0,
+                0,0,0,0;
+    
+    // From Lesson 17
+    
+    float px = x_state(0);
+    float py = x_state(1);
+    float vx = x_state(2);
+    float vy = x_state(3);
+    float c2 = px*px+py*py;
+    float c1 = sqrt(c2);
+    float c3 = c1*c2;
+    
+    if (c2 == 0){
+        std::cout << "CalculateJacobian() Error - Division by zero";
+        return Jacobian;
+    }
+    else {
+        Jacobian << px/c1, py/c1, 0, 0,
+        -py/c2, px/c2, 0, 0,
+        py*(vx*py-vy*px)/c3, px*(-vx*py+vy*px)/c3, px/c1, py/c1;
+    }
+    
+    return Jacobian;
+}
+```
+
+In order to calculate the predicted measurement, we use the original nonlinear function, as there is no need to simplify to a linear function.  The nonlinear funciton `h(x)` is illustrated below.
+
+From tools.cpp:
+
+```C++
+VectorXd Tools::Cartesian2Polar(const VectorXd& x_state) {
+    /**
+     * Convert cartesian coordinates to polar.
+     */
+    VectorXd h_x(3,1);
+    h_x << 1,0,0;
+    
+    // From Lesson 14
+    
+    float px = x_state(0);
+    float py = x_state(1);
+    float vx = x_state(2);
+    float vy = x_state(3);
+    float c1 = sqrt(px*px+py*py);
+    
+    if ((px == 0)||(c1==0)){
+        std::cout << "Cartesian2Polar Error - Division by zero";
+        return h_x;
+    }
+    else {
+        h_x << c1,
+               atan2(py, px),
+               (vx*px+vy*py)/c1;
+    }
+    
+    return h_x;
+}
+```
+
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
 
