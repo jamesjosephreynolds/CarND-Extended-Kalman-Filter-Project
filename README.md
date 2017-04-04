@@ -135,6 +135,46 @@ VectorXd Tools::Cartesian2Polar(const VectorXd& x_state) {
 }
 ```
 
+## Predict Step ##
+The predict step is quite simple.  The `F` and `Q` matrices are updated based on the current measurement timestamp, and `x'` is calculated accordingly.
+
+From FusionEKF.cpp
+```C++
+  // Update F and Q matrices, calculate x'
+  float dt, dt2, dt3, dt4;
+  dt = 0.000001*(measurement_pack.timestamp_ - previous_timestamp_);
+  dt2 = dt*dt;
+  dt3 = dt2*dt/2;
+  dt4 = dt3*dt/2;
+  
+  float noise_ax, noise_ay;
+  noise_ax = 9;
+  noise_ay = 9;
+  previous_timestamp_ = measurement_pack.timestamp_;
+
+  ekf_.F_ << 1, 0, dt, 0,
+             0, 1, 0, dt,
+             0, 0, 1, 0,
+             0, 0, 0, 1;
+  
+  ekf_.Q_ << dt4*noise_ax, 0, dt3*noise_ax, 0,
+             0, dt4*noise_ay, 0, dt3*noise_ay,
+             dt3*noise_ax, 0, dt2*noise_ax, 0,
+             0, dt3*noise_ay, 0, dt2*noise_ay;
+    
+  ekf_.Predict();
+```
+
+From kalman_filter.cpp
+```C++
+void KalmanFilter::Predict() {
+    // From Lesson 11
+    x_ = F_*x_;
+    MatrixXd Ft = F_.transpose();
+    P_ = F_ * P_ * Ft + Q_;
+}
+```
+
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
 
