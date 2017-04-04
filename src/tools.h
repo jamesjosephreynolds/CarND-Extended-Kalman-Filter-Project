@@ -24,6 +24,16 @@ public:
   * A helper method to calculate Jacobians.
   */
   Eigen::MatrixXd CalculateJacobian(const Eigen::VectorXd& x_state);
+    
+  /**
+  * A coordinate system transformation.
+  */
+  Eigen::VectorXd Cartesian2Polar(const Eigen::VectorXd& x_state);
+    
+  /**
+  * A coordinate system transformation.
+  */
+  Eigen::VectorXd Polar2Cartesian(const Eigen::VectorXd& radar_meas);
 
 };
 
