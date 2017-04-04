@@ -250,8 +250,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
 ## Performance ##
 Two datafiles are provided to evaluate the accuracy for the final EKF.
-1. data/sample-laser-radar-measurement-data-1.txt
-1. data/sample-laser-radar-measurement-data-2.txt
+1. [sample-laser-radar-measurement-data-1.txt](data/sample-laser-radar-measurement-data-1.txt)
+2. [sample-laser-radar-measurement-data-2.txt](data/sample-laser-radar-measurement-data-2.txt)
 
 RMSE is calculated as shown below.
 
