@@ -1,6 +1,30 @@
 # Extended Kalman Filter Project #
 
-This project is originally forked from https://github.com/udacity/CarND-Extended-Kalman-Filter-Project.
+This project is originally forked from https://github.com/udacity/CarND-Extended-Kalman-Filter-Project.  This repository includes starter code, that is used herein.
+
+## Initialization ##
+
+There are two possibilities for initializing the state estimate, depending on which sensor provides a measurement first.
+
+### Lidar Measurement Initialization ##
+
+If the first available measurement comes from the lidar sensor, then the initialization is simple.  We simply take the measured `x` and `y` positions as the initial values for `px` and `py`, and assume `vx` and `vy` are initially `0.0`.
+
+From Constructor function in class KalmanFilter kalman_filter.cpp:
+```
+x_ = VectorXd(4);
+  x_ << 1, 1, 0, 0;
+```
+
+From FusionEKF.cpp:
+
+```
+else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
+        ekf_.x_(0) = measurement_pack.raw_measurements_(0);
+        ekf_.x_(1) = measurement_pack.raw_measurements_(1);
+        previous_timestamp_ = measurement_pack.timestamp_;
+    }
+```
 
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
@@ -14,4 +38,4 @@ For the case where both sensors are used, RMSE for the y position is 0.016.  For
 *Results using only lidar*
 
 ![Whoops, where's my image](data/radar_only.png)
-*Results using only radar
+*Results using only radar*
