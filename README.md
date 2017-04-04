@@ -303,6 +303,15 @@ My EKF implementation satisfies the rubric accuracy criteria for both datasets.
 |`vy`|0.544 |0.60    
 -------------------------------------------
 
+#### RMSE for sample-laser-radar-measurement-data-2.txt ####
+|State |RMSE Actual |RMSE Limit                     
+|:-----|:-----------|:------
+|`px` |0.186 |0.20 
+|`py` |0.190 |0.20 
+|`vx` |0.475 |0.50 
+|`vy` |0.805 |0.85 
+---------------
+
 ## Performance Visualization ##
 Udacity provides a tool to visualize the performance of the extended Kalman filter, and to calculate the RMSE for a single figure 8 path.  The images below show the performance for cases with both lidar and radar, with lidar only, and with radar only.  It's clear from these results that the overall performance is much better for the combined system, and that the radar by itself is a very poor sensor.
 
